@@ -22,12 +22,17 @@ DOWN = 2
 LEFT = 3
 
 # Square size
-squareSize = 10
+squareSize = 20
 
-def correctRandomPos():
+def correctRandomFoodPos():
     x = random.randint(0,WIDTH-squareSize)
     y = random.randint(0,HEIGHT-squareSize)
-    return (x//10 * 10, y//10 * 10)
+    return (x//squareSize * squareSize, y//squareSize * squareSize)
+
+def correct_random_wall_pos():
+    x = random.randint(0, WIDTH - squareSize)
+    y = random.randint(0, HEIGHT - squareSize)
+    return (x//squareSize * squareSize, y//squareSize * squareSize)
 
 def collision (c1, c2):
     return (c1[0] == c2[0]) and (c1[1] == c2[1])
@@ -51,7 +56,15 @@ food = pygame.Surface((squareSize,squareSize))
 food.fill(FLUO_GREEN)
 
 # Food position
-foodPos = correctRandomPos()
+foodPos = correctRandomFoodPos()
+
+# Wall block
+wall_block = pygame.Surface((squareSize, squareSize))
+wall_block.fill(WHITE)
+
+# Wall position
+wall_pos = (-20,-20)
+all_wall_pos = []
 
 # Add the score
 font = pygame.font.Font('helveticabold.ttf', 25)
@@ -62,7 +75,7 @@ clock = pygame.time.Clock()
 gameOver = False
 # Main loop
 while not gameOver:
-    clock.tick(20)
+    clock.tick(15)
     # Close the game event
     for event in pygame.event.get():
         if event.type == QUIT:
@@ -81,8 +94,12 @@ while not gameOver:
 
     # Collision with food
     if collision(snake[0],foodPos):
-        foodPos = correctRandomPos()
+        foodPos = correctRandomFoodPos()
+        wall_pos = correct_random_wall_pos()
+
+        all_wall_pos.append(wall_pos)
         snake.append((0,0))
+
         score += 1
 
     # Check if snake collided with boundaries
@@ -105,16 +122,28 @@ while not gameOver:
 
     # Key pressing
     if snakeDirection == UP:
-        snake[0] = (snake[0][0], snake[0][1] - 10)
+        snake[0] = (snake[0][0], snake[0][1] - squareSize)
     if snakeDirection == RIGHT:
-        snake[0] = (snake[0][0] + 10, snake[0][1])
+        snake[0] = (snake[0][0] + squareSize, snake[0][1])
     if snakeDirection == DOWN:
-        snake[0] = (snake[0][0], snake[0][1] + 10)
+        snake[0] = (snake[0][0], snake[0][1] + squareSize)
     if snakeDirection == LEFT:
-        snake[0] = (snake[0][0] - 10, snake[0][1])
+        snake[0] = (snake[0][0] - squareSize, snake[0][1])
 
     # Update the screen color every repetition
     screen.fill(BLACK)
+    
+    # Wall block
+    for pos in all_wall_pos:
+        screen.blit(wall_block, pos)
+
+        # If food appears in the same position of the wall
+        if pos == foodPos:
+            foodPos = correctRandomFoodPos()
+
+        # If snake collids with the wall
+        if collision(snake[0], pos):
+            gameOver = True
 
     # Food
     screen.blit(food,foodPos)
